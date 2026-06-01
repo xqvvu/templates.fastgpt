@@ -6,8 +6,9 @@
     "scripts:setup": "node"
   },
   "dependencies": {
-    "@types/node": "^25.9.1",
+    "@types/node": "^24.12.4",
     "oxfmt": "^0.52.0",
     "typescript": "^6.0.3"
-  }
+  },
+  "packageManager": "pnpm@11.5.0"
 }
