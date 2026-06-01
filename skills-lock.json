@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "docker-to-sealos": {
+      "source": "labring/sealos-skills",
+      "sourceType": "github",
+      "skillPath": "skills/docker-to-sealos/SKILL.md",
+      "computedHash": "83e8a7d73c9216282e75e01578f54ad4c63d17fee2b06cc562c66f4e19f7a470"
+    }
+  }
+}
