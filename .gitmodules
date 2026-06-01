@@ -1,0 +1,8 @@
+[submodule "templates"]
+	path = templates
+	url = https://github.com/labring-actions/templates.git
+	branch = kb-0.9
+[submodule "fastgpt"]
+	path = fastgpt
+	url = https://github.com/labring/fastgpt.git
+	branch = main

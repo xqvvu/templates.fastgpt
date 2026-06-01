@@ -1,0 +1,14 @@
+{
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+
+  "yaml.validate": false,
+  "[yaml]": {
+    "yaml.format.enable": false,
+    "editor.formatOnSave": false
+  },
+  "[jsonc][json][typescript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  }
+}

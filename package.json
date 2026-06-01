@@ -1,0 +1,13 @@
+{
+  "name": "templates.fastgpt",
+  "version": "0.0.1-alpha.1",
+  "author": "Xianquan",
+  "scripts": {
+    "scripts:setup": "node"
+  },
+  "dependencies": {
+    "@types/node": "^25.9.1",
+    "oxfmt": "^0.52.0",
+    "typescript": "^6.0.3"
+  }
+}
