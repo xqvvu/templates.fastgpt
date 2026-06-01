@@ -10,5 +10,9 @@
   "[jsonc][json][typescript]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[shellscript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "xqvvu.shell-tidy-vscode"
   }
 }
