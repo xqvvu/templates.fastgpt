@@ -150,8 +150,16 @@ If the high-risk change can be mapped with confidence using these rules, impleme
 9. Apply FastGPT-specific conversion overrides before editing.
 10. Edit only the necessary template files and supporting docs/scripts.
 11. If any FastGPT template file changed, run `node scripts/js/update-changelog.ts --source-version <main|v4.14|...> --note "<中文摘要>"` and include the changelog in the same commit as the template changes.
-12. Validate YAML shape and template conventions as much as local tooling allows.
-13. Summarize changed files, high-risk assumptions, and validation results.
+12. When preparing an automated PR, write `.fastgpt-template-update.json` in the top-level repository before committing and pushing. Include:
+    - `source_version`: deployment source directory, such as `main`, `v4.14`, or `v4.15`.
+    - `fastgpt_ref`: upstream FastGPT branch, tag, or commit used for the submodule refresh.
+    - `templates_branch`: optional templates submodule branch pushed to the templates fork.
+    - `updated_by`: usually `codex-agent`.
+    - `created_at`: ISO-compatible timestamp.
+13. Commit template changes inside the `templates` submodule first and push that branch to the configured templates fork when template files changed. Then commit the top-level submodule pointers, `CHANGELOG.md`, and `.fastgpt-template-update.json`.
+14. Push the top-level branch with the `xqvvu/fastgpt-template/**` prefix to trigger `.github/workflows/fastgpt-template-pr.yml`. The workflow validates the update, creates or updates a Ready PR against `main`, and sends the Feishu webhook notification. If validation fails, it sends a failure notification and does not create/update the PR.
+15. Validate YAML shape and template conventions as much as local tooling allows.
+16. Summarize changed files, high-risk assumptions, validation results, pushed branches, and the automated PR status.
 
 ## Minimum Commands
 
@@ -172,6 +180,25 @@ If template files changed, record the update:
 
 ```sh
 node scripts/js/update-changelog.ts --source-version <main|v4.14|...> --note "<中文摘要>"
+```
+
+Before pushing an automated PR branch, create `.fastgpt-template-update.json`:
+
+```json
+{
+  "source_version": "main",
+  "fastgpt_ref": "main",
+  "templates_branch": "xqvvu/fastgpt-template/main-YYYYMMDD",
+  "updated_by": "codex-agent",
+  "created_at": "2026-06-02T00:00:00+08:00"
+}
+```
+
+Run these checks before pushing:
+
+```sh
+pnpm typecheck
+pnpm fastgpt-template:validate
 ```
 
 Do not add a changelog entry for changes that only touch skills, AGENTS.md, or helper scripts.
