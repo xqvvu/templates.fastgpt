@@ -88,6 +88,9 @@ async function main() {
     ...selected.map((item) => item.path),
   ]);
   for (const submodule of selected) {
+    syncNestedSubmodules(submodule);
+  }
+  for (const submodule of selected) {
     assertClean(submodule, Boolean(options.force));
   }
 
@@ -290,6 +293,7 @@ function updateSubmodule(submodule: Submodule, plan: RefPlan) {
   }
 
   const after = revParse(submodule, "HEAD");
+  syncNestedSubmodules(submodule);
   return {
     name: submodule.name,
     state: before === after ? "unchanged" : "updated",
@@ -307,6 +311,11 @@ function fetchSubmodule(submodule: Submodule, plan: RefPlan) {
   } else {
     runGit(["-C", submodule.path, "fetch", "--tags", "origin"]);
   }
+}
+
+function syncNestedSubmodules(submodule: Submodule) {
+  runGit(["-C", submodule.path, "submodule", "sync", "--recursive"]);
+  runGit(["-C", submodule.path, "submodule", "update", "--init", "--recursive"]);
 }
 
 function resolveTarget(submodule: Submodule, plan: RefPlan) {
