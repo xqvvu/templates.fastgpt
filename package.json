@@ -2,10 +2,17 @@
   "name": "templates.fastgpt",
   "version": "0.0.1-alpha.1",
   "author": "Xianquan",
+  "type": "module",
   "scripts": {
-    "scripts:setup": "node"
+    "typecheck": "tsc --noEmit",
+    "submodules:status": "node scripts/js/update-submodules.ts --status",
+    "submodules:update": "node scripts/js/update-submodules.ts"
   },
   "dependencies": {
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
     "@types/node": "^24.12.4",
     "oxfmt": "^0.52.0",
     "typescript": "^6.0.3"
