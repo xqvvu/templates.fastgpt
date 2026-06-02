@@ -6,12 +6,16 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "changelog": "node scripts/js/update-changelog.ts",
+    "fastgpt-template:validate": "node scripts/js/validate-fastgpt-template-pr.ts",
+    "fastgpt-template:render-pr": "node scripts/js/render-fastgpt-template-pr.ts",
+    "fastgpt-template:render-feishu": "node scripts/js/render-feishu-message.ts",
     "submodules:status": "node scripts/js/update-submodules.ts --status",
     "submodules:update": "node scripts/js/update-submodules.ts"
   },
   "dependencies": {
     "commander": "^15.0.0",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
