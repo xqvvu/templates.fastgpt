@@ -121,6 +121,7 @@ Automatically update:
 - Required Deployment/Service/Ingress resources for current FastGPT core services.
 - ConfigMap content that maps to FastGPT runtime config.
 - README/icon/screenshot URLs only when the template folder/name changed or an existing URL is wrong.
+- `FASTGPT_TEMPLATE_CHANGELOG.md` after template files change.
 
 Report clearly in the final response when the update includes high-risk structural changes:
 
@@ -148,8 +149,9 @@ If the high-risk change can be mapped with confidence using these rules, impleme
    - all templates vs `args.json` image repositories and tags.
 9. Apply FastGPT-specific conversion overrides before editing.
 10. Edit only the necessary template files and supporting docs/scripts.
-11. Validate YAML shape and template conventions as much as local tooling allows.
-12. Summarize changed files, high-risk assumptions, and validation results.
+11. If any FastGPT template file changed, run `node scripts/js/record-fastgpt-template-changelog.ts --note "<summary>"` and include the changelog in the same commit as the template changes.
+12. Validate YAML shape and template conventions as much as local tooling allows.
+13. Summarize changed files, high-risk assumptions, and validation results.
 
 ## Minimum Commands
 
@@ -165,6 +167,14 @@ If updating templates, run the real submodule refresh first:
 ```sh
 node scripts/js/update-submodules.ts
 ```
+
+If template files changed, record the update:
+
+```sh
+node scripts/js/record-fastgpt-template-changelog.ts --note "<summary>"
+```
+
+Do not add a changelog entry for changes that only touch skills, AGENTS.md, or helper scripts.
 
 ## Validation Checklist
 
