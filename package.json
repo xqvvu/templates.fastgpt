@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "fastgpt:changelog": "node scripts/js/record-fastgpt-template-changelog.ts",
+    "changelog": "node scripts/js/update-changelog.ts",
     "submodules:status": "node scripts/js/update-submodules.ts --status",
     "submodules:update": "node scripts/js/update-submodules.ts"
   },

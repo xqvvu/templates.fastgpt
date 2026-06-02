@@ -34,7 +34,7 @@ FastGPT-specific rules in this skill override generic Docker-to-Sealos conversio
 
 ## Source Of Truth
 
-Use these files from the `fastgpt` submodule:
+Use these files from the `fastgpt` submodule. Default to `main` unless the user explicitly asks for a stable release line such as `v4.14`; in that case use the matching version directory for both `deploy/version/<version>` and `document/public/deploy/docker/<version>`.
 
 - `fastgpt/deploy/version/main/args.json`: primary image repository and tag source.
 - `fastgpt/deploy/version/main/docker-compose.template.yml`: production compose template source.
@@ -121,7 +121,7 @@ Automatically update:
 - Required Deployment/Service/Ingress resources for current FastGPT core services.
 - ConfigMap content that maps to FastGPT runtime config.
 - README/icon/screenshot URLs only when the template folder/name changed or an existing URL is wrong.
-- `FASTGPT_TEMPLATE_CHANGELOG.md` after template files change.
+- `CHANGELOG.md` after template files change.
 
 Report clearly in the final response when the update includes high-risk structural changes:
 
@@ -149,7 +149,7 @@ If the high-risk change can be mapped with confidence using these rules, impleme
    - all templates vs `args.json` image repositories and tags.
 9. Apply FastGPT-specific conversion overrides before editing.
 10. Edit only the necessary template files and supporting docs/scripts.
-11. If any FastGPT template file changed, run `node scripts/js/record-fastgpt-template-changelog.ts --note "<summary>"` and include the changelog in the same commit as the template changes.
+11. If any FastGPT template file changed, run `node scripts/js/update-changelog.ts --source-version <main|v4.14|...> --note "<中文摘要>"` and include the changelog in the same commit as the template changes.
 12. Validate YAML shape and template conventions as much as local tooling allows.
 13. Summarize changed files, high-risk assumptions, and validation results.
 
@@ -171,7 +171,7 @@ node scripts/js/update-submodules.ts
 If template files changed, record the update:
 
 ```sh
-node scripts/js/record-fastgpt-template-changelog.ts --note "<summary>"
+node scripts/js/update-changelog.ts --source-version <main|v4.14|...> --note "<中文摘要>"
 ```
 
 Do not add a changelog entry for changes that only touch skills, AGENTS.md, or helper scripts.

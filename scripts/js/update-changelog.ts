@@ -13,12 +13,13 @@ type ArgsJson = {
 type Options = {
   note?: string[];
   template?: string[];
+  sourceVersion?: string;
   allowEmpty?: boolean;
   dryRun?: boolean;
 };
 
 const root = process.cwd();
-const changelogPath = path.join(root, "FASTGPT_TEMPLATE_CHANGELOG.md");
+const changelogPath = path.join(root, "CHANGELOG.md");
 const templateNames = ["fastgpt", "fastgpt-pro", "fastgpt-milvus"] as const;
 const sourceTagNames = [
   "fastgpt",
@@ -34,14 +35,19 @@ const sourceTagNames = [
 ] as const;
 
 const program = new Command()
-  .name("record-fastgpt-template-changelog")
-  .description("Append a generated FastGPT template changelog entry.")
-  .option("--note <text>", "note to append to the changelog entry", collect, [])
+  .name("update-changelog")
+  .description("Append a generated Chinese FastGPT template changelog entry.")
+  .option("--note <text>", "Chinese note to append to the changelog entry", collect, [])
   .option(
     "--template <name>",
     "template name to include when no template diff is present",
     collect,
     [],
+  )
+  .option(
+    "--source-version <version>",
+    "FastGPT deployment version directory to read, such as main or v4.14",
+    "main",
   )
   .option("--allow-empty", "allow writing an entry when no template diff is detected")
   .option("--dry-run", "print the generated entry without writing")
@@ -120,18 +126,19 @@ function changedFastgptTemplates() {
 }
 
 async function buildEntry(templates: readonly string[], notes: readonly string[]) {
-  const argsJson = await readArgsJson();
+  const sourceVersion = options.sourceVersion ?? "main";
+  const argsJson = await readArgsJson(sourceVersion);
   const sourceTags = sourceTagNames
     .map((name) => {
       const tag = argsJson.tags?.[name];
-      return tag ? `  - \`${name}\`: \`${tag}\`` : undefined;
+      return tag ? `  - \`${name}\`：\`${tag}\`` : undefined;
     })
     .filter((line): line is string => Boolean(line));
 
   const updatedTemplateLines =
-    templates.length > 0 ? templates.map((name) => `  - \`${name}\``) : ["  - none"];
+    templates.length > 0 ? templates.map((name) => `  - \`${name}\``) : ["  - 无"];
   const templateImageLines = await templateImageSummary(templates);
-  const noteLines = notes.length > 0 ? notes : ["Generated changelog entry."];
+  const noteLines = notes.length > 0 ? notes : ["由脚本生成更新记录。"];
   const date = new Date().toISOString().slice(0, 10);
   const fastgptRef = submoduleRef("fastgpt");
   const templatesRef = submoduleRef("templates");
@@ -139,29 +146,34 @@ async function buildEntry(templates: readonly string[], notes: readonly string[]
   return [
     `## ${date}`,
     "",
-    `- FastGPT submodule: \`${fastgptRef.short}\` (${fastgptRef.detail})`,
-    `- Templates submodule: \`${templatesRef.short}\` (${templatesRef.detail})`,
-    "- Updated templates:",
+    `- FastGPT 子模块：\`${fastgptRef.short}\`（${fastgptRef.detail}）`,
+    `- Templates 子模块：\`${templatesRef.short}\`（${templatesRef.detail}）`,
+    `- 部署源版本：\`${sourceVersion}\``,
+    "- 更新的模板：",
     ...updatedTemplateLines,
-    "- Source tags:",
+    "- 源版本：",
     ...sourceTags,
-    "- Template images:",
+    "- 模板镜像：",
     ...templateImageLines,
-    "- Notes:",
+    "- 备注：",
     ...noteLines.map((note) => `  - ${note}`),
     "",
   ].join("\n");
 }
 
-async function readArgsJson() {
-  const argsPath = path.join(root, "fastgpt/deploy/version/main/args.json");
+async function readArgsJson(sourceVersion: string) {
+  if (!/^[a-zA-Z0-9._-]+$/.test(sourceVersion)) {
+    throw new InvalidArgumentError(`Invalid source version: ${sourceVersion}`);
+  }
+
+  const argsPath = path.join(root, "fastgpt/deploy/version", sourceVersion, "args.json");
   const content = await readFile(argsPath, "utf8");
   return JSON.parse(content) as ArgsJson;
 }
 
 async function templateImageSummary(templates: readonly string[]) {
   if (templates.length === 0) {
-    return ["  - none"];
+    return ["  - 无"];
   }
 
   const lines: string[] = [];
@@ -176,7 +188,7 @@ async function templateImageSummary(templates: readonly string[]) {
     );
 
     lines.push(
-      `  - \`${template}\`: ${images.length > 0 ? images.map((image) => `\`${image}\``).join(", ") : "none"}`,
+      `  - \`${template}\`：${images.length > 0 ? images.map((image) => `\`${image}\``).join(", ") : "无"}`,
     );
   }
   return lines;
@@ -200,7 +212,12 @@ function submoduleRef(pathName: string) {
 async function appendEntry(entry: string) {
   const existing = existsSync(changelogPath)
     ? await readFile(changelogPath, "utf8")
-    : "# FastGPT Template Changelog\n\n";
+    : [
+        "# 更新日志",
+        "",
+        "本文件记录 FastGPT Sealos 模板的自动/半自动更新，由 `scripts/js/update-changelog.ts` 生成或维护。",
+        "",
+      ].join("\n");
   const trimmed = existing.trimEnd();
   await writeFile(changelogPath, `${trimmed}\n\n${entry}`, "utf8");
 }
