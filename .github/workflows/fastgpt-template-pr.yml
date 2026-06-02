@@ -1,0 +1,141 @@
+name: FastGPT Template PR
+
+on:
+  push:
+    branches:
+      - 'xqvvu/fastgpt-template/**'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: fastgpt-template-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create-pr:
+    name: Validate and create PR
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.FASTGPT_TEMPLATE_BOT_TOKEN }}
+      BOT_TOKEN: ${{ secrets.FASTGPT_TEMPLATE_BOT_TOKEN }}
+      FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+
+    steps:
+      - name: Checkout maintenance branch
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.FASTGPT_TEMPLATE_BOT_TOKEN }}
+          fetch-depth: 0
+          submodules: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
+
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config --global url."https://x-access-token:${BOT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git submodule sync
+          git submodule update --init -- fastgpt
+
+          git config submodule.templates.url "https://github.com/xqvvu/templates.git"
+          git submodule update --init -- templates
+
+      - name: Typecheck and validate templates
+        shell: bash
+        run: |
+          set +e
+          pnpm typecheck
+          typecheck_status=$?
+          pnpm fastgpt-template:validate
+          validate_status=$?
+
+          if [ "$typecheck_status" -ne 0 ] || [ "$validate_status" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Render PR body
+        if: success()
+        shell: bash
+        run: pnpm fastgpt-template:render-pr
+
+      - name: Create or update PR
+        if: success()
+        id: pr
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_branch="main"
+          head_branch="${GITHUB_REF_NAME}"
+          source_version="$(node -e "const fs = require('node:fs'); const m = JSON.parse(fs.readFileSync('.fastgpt-template-update.json', 'utf8')); console.log(m.source_version)")"
+          title="chore(fastgpt): update templates from ${source_version}"
+          existing_pr="$(gh pr list --base "$base_branch" --head "$head_branch" --state open --json number --jq '.[0].number // ""')"
+
+          if [ -n "$existing_pr" ]; then
+            gh pr edit "$existing_pr" --title "$title" --body-file .fastgpt-template-pr-body.md
+            pr_url="$(gh pr view "$existing_pr" --json url --jq '.url')"
+            pr_number="$existing_pr"
+            pr_action="updated"
+          else
+            pr_url="$(gh pr create --base "$base_branch" --head "$head_branch" --title "$title" --body-file .fastgpt-template-pr-body.md)"
+            pr_number="$(gh pr view "$pr_url" --json number --jq '.number')"
+            pr_action="created"
+          fi
+
+          gh pr edit "$pr_number" --add-label fastgpt-template --add-label automated || \
+            echo "::warning::Could not add PR labels; ensure fastgpt-template and automated labels exist."
+
+          {
+            echo "url=$pr_url"
+            echo "number=$pr_number"
+            echo "action=$pr_action"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Render success Feishu message
+        if: success()
+        shell: bash
+        run: pnpm fastgpt-template:render-feishu --mode success --pr-url '${{ steps.pr.outputs.url }}'
+
+      - name: Render failure Feishu message
+        if: failure()
+        shell: bash
+        run: pnpm fastgpt-template:render-feishu --mode failure
+
+      - name: Send Feishu notification
+        if: always() && env.FEISHU_WEBHOOK_URL != ''
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f .fastgpt-template-feishu.json ]; then
+            echo "::warning::Feishu payload was not generated; skipping notification."
+            exit 0
+          fi
+
+          curl --fail --show-error --silent \
+            -H 'Content-Type: application/json' \
+            -d @.fastgpt-template-feishu.json \
+            "$FEISHU_WEBHOOK_URL"
+
+      - name: Warn when Feishu webhook is missing
+        if: always() && env.FEISHU_WEBHOOK_URL == ''
+        shell: bash
+        run: echo "::warning::FEISHU_WEBHOOK_URL is not configured; skipping Feishu notification."
