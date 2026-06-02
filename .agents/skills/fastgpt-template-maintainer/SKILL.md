@@ -138,16 +138,33 @@ If the high-risk change can be mapped with confidence using these rules, impleme
 1. Read `.agents/skills/docker-to-sealos/SKILL.md`.
 2. Read this skill.
 3. Inspect current `git status --short`; do not revert unrelated user or submodule changes.
-4. Read the FastGPT source-of-truth files listed above.
-5. Read the three current template `index.yaml` files.
-6. Compare each template against its source:
+4. Refresh submodules with `node scripts/js/update-submodules.ts` unless the user explicitly asks not to. For inspection-only work, run `node scripts/js/update-submodules.ts --dry-run`.
+5. After refresh, inspect `git status --short` again. A parent-repo submodule pointer change is expected when a submodule updated; a lowercase dirty submodule state must be understood before editing templates.
+6. Read the FastGPT source-of-truth files listed above.
+7. Read the three current template `index.yaml` files.
+8. Compare each template against its source:
    - `fastgpt` and `fastgpt-pro` vs `docker-compose.pg.yml`.
    - `fastgpt-milvus` vs `docker-compose.milvus.yml`.
    - all templates vs `args.json` image repositories and tags.
-7. Apply FastGPT-specific conversion overrides before editing.
-8. Edit only the necessary template files and supporting docs/scripts.
-9. Validate YAML shape and template conventions as much as local tooling allows.
-10. Summarize changed files, high-risk assumptions, and validation results.
+9. Apply FastGPT-specific conversion overrides before editing.
+10. Edit only the necessary template files and supporting docs/scripts.
+11. Validate YAML shape and template conventions as much as local tooling allows.
+12. Summarize changed files, high-risk assumptions, and validation results.
+
+## Minimum Commands
+
+Run these commands during maintenance:
+
+```sh
+node scripts/js/update-submodules.ts --dry-run
+git status --short
+```
+
+If updating templates, run the real submodule refresh first:
+
+```sh
+node scripts/js/update-submodules.ts
+```
 
 ## Validation Checklist
 
